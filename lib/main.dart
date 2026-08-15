@@ -1,22 +1,103 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
-void main() {
-  runApp(const MainApp());
+const viewerArgument = 'viewer';
+
+Future<void> main(List<String> args) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (args.contains(viewerArgument)) {
+    runApp(const ViewerApp());
+  } else {
+    runApp(const ManagerApp());
+  }
 }
 
-class MainApp extends StatefulWidget {
-  const MainApp({super.key});
+class ManagerApp extends StatefulWidget {
+  const ManagerApp({super.key});
 
   @override
-  State<MainApp> createState() => _MainAppState();
+  State<ManagerApp> createState() => _ManagerAppState();
 }
 
-class _MainAppState extends State<MainApp> {
+class _ManagerAppState extends State<ManagerApp> {
+  StreamSubscription<void>? _windowsSub;
+  Timer? _debounce;
+  bool _creatingViewer = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _hideManagerWindow();
+    _ensureViewer();
+    _windowsSub = onWindowsChanged.listen((_) => _scheduleEnsureViewer());
+  }
+
+  void _hideManagerWindow() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _hideNow());
+    Future<void>.delayed(const Duration(milliseconds: 500), _hideNow);
+  }
+
+  Future<void> _hideNow() async {
+    try {
+      final controller = await WindowController.fromCurrentEngine();
+      await controller.hide();
+    } catch (_) {}
+  }
+
+  void _scheduleEnsureViewer() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 200), _ensureViewer);
+  }
+
+  Future<void> _ensureViewer() async {
+    if (_creatingViewer) {
+      return;
+    }
+    _creatingViewer = true;
+    try {
+      final windows = await WindowController.getAll();
+      final hasViewer = windows.any((w) => w.arguments == viewerArgument);
+      if (!hasViewer) {
+        await WindowController.create(
+          const WindowConfiguration(
+            arguments: viewerArgument,
+            hiddenAtLaunch: false,
+          ),
+        );
+      }
+    } catch (_) {
+    } finally {
+      _creatingViewer = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _windowsSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(home: Scaffold(body: SizedBox()));
+  }
+}
+
+class ViewerApp extends StatefulWidget {
+  const ViewerApp({super.key});
+
+  @override
+  State<ViewerApp> createState() => _ViewerAppState();
+}
+
+class _ViewerAppState extends State<ViewerApp> {
   String? _markdown;
   String? _fileName;
 
@@ -38,6 +119,15 @@ class _MainAppState extends State<MainApp> {
       _markdown = content;
       _fileName = file.uri.pathSegments.last;
     });
+  }
+
+  Future<void> _openNewWindow() async {
+    await WindowController.create(
+      const WindowConfiguration(
+        arguments: viewerArgument,
+        hiddenAtLaunch: false,
+      ),
+    );
   }
 
   @override
@@ -105,10 +195,23 @@ class _MainAppState extends State<MainApp> {
                   pPadding: const EdgeInsets.symmetric(vertical: 6),
                 ),
               ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _openFile,
-          tooltip: 'Открыть файл',
-          child: const Icon(Icons.folder_open),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'new-window',
+              onPressed: _openNewWindow,
+              tooltip: 'Новое окно',
+              child: const Icon(Icons.open_in_new),
+            ),
+            const SizedBox(height: 12),
+            FloatingActionButton(
+              heroTag: 'open-file',
+              onPressed: _openFile,
+              tooltip: 'Открыть файл',
+              child: const Icon(Icons.folder_open),
+            ),
+          ],
         ),
       ),
     );
