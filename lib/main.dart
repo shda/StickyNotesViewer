@@ -201,7 +201,7 @@ class _ViewerAppState extends State<ViewerApp> {
                   ? const Center(
                       child: Text(
                         'Откройте Markdown файл',
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 18, color: Colors.white70),
                       ),
                     )
                   : Markdown(
@@ -211,34 +211,43 @@ class _ViewerAppState extends State<ViewerApp> {
                         Theme.of(context),
                       ).copyWith(
                         p: const TextStyle(
-                          color: Colors.black87,
+                          color: Colors.white,
                           fontSize: 16,
                           height: 1.4,
                         ),
                         h1: const TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                         h2: const TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                         h3: const TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                         code: const TextStyle(
-                          color: Colors.black87,
-                          backgroundColor: Color(0xFFF0F0F0),
+                          color: Color(0xFFE0E0E0),
+                          backgroundColor: Color(0xFF2A2A2A),
                         ),
                         codeblockDecoration: const BoxDecoration(
-                          color: Color(0xFFF5F5F5),
+                          color: Color(0xFF2A2A2A),
                           borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                         codeblockPadding: const EdgeInsets.all(12),
+                        tableHead: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        tableBody: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                        tableBorder: TableBorder.all(color: Colors.white24),
                         h1Padding: const EdgeInsets.only(top: 16, bottom: 8),
                         h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
                         h3Padding: const EdgeInsets.only(top: 12, bottom: 6),
