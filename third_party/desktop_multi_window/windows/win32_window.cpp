@@ -288,6 +288,17 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
     }
 
+    case WM_GETMINMAXINFO: {
+      auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
+      HMONITOR monitor =
+          ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+      UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
+      const double scale = dpi / 96.0;
+      info->ptMinTrackSize.x = static_cast<LONG>(200 * scale);
+      info->ptMinTrackSize.y = static_cast<LONG>(150 * scale);
+      return 0;
+    }
+
     case WM_ACTIVATE:
       if (child_content_ != nullptr) {
         SetFocus(child_content_);

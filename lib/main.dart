@@ -97,15 +97,31 @@ class ViewerApp extends StatefulWidget {
   State<ViewerApp> createState() => _ViewerAppState();
 }
 
-class _ViewerAppState extends State<ViewerApp> {
+class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   String? _markdown;
   String? _fileName;
   WindowController? _windowController;
+  bool _focused = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _showWindow());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final focused = state == AppLifecycleState.resumed;
+    if (focused != _focused) {
+      setState(() => _focused = focused);
+    }
   }
 
   Future<void> _showWindow() async {
@@ -151,8 +167,12 @@ class _ViewerAppState extends State<ViewerApp> {
   }
 
   Widget _buildTitleBar() {
-    return Container(
-      height: 40,
+    final focused = _focused;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      height: focused ? 40 : 10,
+      clipBehavior: Clip.hardEdge,
       color: Colors.amber.shade200,
       child: Row(
         children: [
@@ -161,21 +181,34 @@ class _ViewerAppState extends State<ViewerApp> {
               behavior: HitTestBehavior.opaque,
               onPanStart: (_) => _windowController?.startDrag(),
               child: Center(
-                child: Text(
-                  _fileName ?? 'Sticky Notes Viewer',
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  opacity: focused ? 1 : 0,
+                  child: Text(
+                    _fileName ?? 'Sticky Notes Viewer',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-          IconButton(
-            onPressed: () => _windowController?.close(),
-            tooltip: 'Закрыть',
-            icon: const Icon(Icons.close, size: 18),
+          IgnorePointer(
+            ignoring: !focused,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+              opacity: focused ? 1 : 0,
+              child: IconButton(
+                onPressed: () => _windowController?.close(),
+                tooltip: 'Закрыть',
+                icon: const Icon(Icons.close, size: 18),
+              ),
+            ),
           ),
         ],
       ),
@@ -257,23 +290,31 @@ class _ViewerAppState extends State<ViewerApp> {
             ),
           ],
         ),
-        floatingActionButton: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'new-window',
-              onPressed: _openNewWindow,
-              tooltip: 'Новое окно',
-              child: const Icon(Icons.open_in_new),
+        floatingActionButton: IgnorePointer(
+          ignoring: !_focused,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            opacity: _focused ? 1 : 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'new-window',
+                  onPressed: _openNewWindow,
+                  tooltip: 'Новое окно',
+                  child: const Icon(Icons.open_in_new),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton(
+                  heroTag: 'open-file',
+                  onPressed: _openFile,
+                  tooltip: 'Открыть файл',
+                  child: const Icon(Icons.folder_open),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            FloatingActionButton(
-              heroTag: 'open-file',
-              onPressed: _openFile,
-              tooltip: 'Открыть файл',
-              child: const Icon(Icons.folder_open),
-            ),
-          ],
+          ),
         ),
       ),
     );
