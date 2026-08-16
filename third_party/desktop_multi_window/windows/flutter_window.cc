@@ -1,8 +1,5 @@
 #include "flutter_window.h"
 
-#include <cstdio>
-#include <cstring>
-
 #include "flutter_windows.h"
 
 #include "tchar.h"
@@ -56,24 +53,6 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd,
   ChildResizeState* state = GetChildResizeState(hwnd);
   WNDPROC original = state ? state->original_proc : nullptr;
   HWND top = ::GetAncestor(hwnd, GA_ROOT);
-
-  if (message == WM_LBUTTONDOWN || message == WM_LBUTTONUP ||
-      message == WM_NCLBUTTONDOWN || message == WM_NCLBUTTONUP ||
-      message == WM_MOUSEMOVE) {
-    static int count = 0;
-    if (count < 300) {
-      count++;
-      char buf[128];
-      sprintf_s(buf, sizeof(buf), "CHILD msg=0x%X x=%d y=%d\n", (unsigned)message,
-                (int)(short)LOWORD(lparam), (int)(short)HIWORD(lparam));
-      FILE* dbg = nullptr;
-      fopen_s(&dbg, "C:\\Users\\user\\AppData\\Local\\Temp\\kilo\\mouse_log.txt", "a");
-      if (dbg) {
-        fwrite(buf, 1, strlen(buf), dbg);
-        fclose(dbg);
-      }
-    }
-  }
 
   switch (message) {
     case WM_NCHITTEST: {

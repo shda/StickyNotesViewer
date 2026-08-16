@@ -15,10 +15,7 @@ class ConfigDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) => debugPrint('DLG_PTR_DOWN'),
-      onPointerUp: (_) => debugPrint('DLG_PTR_UP'),
-      child: Dialog(
+    return Dialog(
       backgroundColor: const Color(0xFF3A3A3A),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: SizedBox(
@@ -89,16 +86,12 @@ class ConfigDialog extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton(
-                  onPressed: () {
-                    debugPrint('DLG_SAVE_TAP');
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => Navigator.of(context).pop(),
                   child: Text('save'.tr()),
                 ),
               ),
             ),
           ],
-        ),
         ),
       ),
     );
