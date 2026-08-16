@@ -44,9 +44,9 @@ MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context,
       fontSize: 16 * scale,
     ),
     tableBorder: TableBorder.all(color: Colors.white24),
-    h1Padding: const EdgeInsets.only(top: 16, bottom: 8),
-    h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
-    h3Padding: const EdgeInsets.only(top: 12, bottom: 6),
+    h1Padding: const EdgeInsets.only(top: 4, bottom: 8),
+    h2Padding: const EdgeInsets.only(top: 4, bottom: 8),
+    h3Padding: const EdgeInsets.only(top: 4, bottom: 6),
     pPadding: const EdgeInsets.symmetric(vertical: 6),
   );
 }

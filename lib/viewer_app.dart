@@ -390,6 +390,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                     : Markdown(
                         data: _normalizeMarkdownImages(_markdown!),
                         selectable: true,
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
                         styleSheet: darkMarkdownStyleSheet(
                           context,
                           scale: _fontScale,
