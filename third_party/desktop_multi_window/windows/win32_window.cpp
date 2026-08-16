@@ -2,6 +2,7 @@
 
 #include <dwmapi.h>
 #include <flutter_windows.h>
+#include <uxtheme.h>
 
 namespace {
 
@@ -148,7 +149,7 @@ bool Win32Window::Create(const std::wstring& title,
   double scale_factor = dpi / 96.0;
 
   HWND window = CreateWindow(
-      window_class, title.c_str(), WS_OVERLAPPEDWINDOW & ~WS_CAPTION,
+      window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
       Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
       Scale(size.width, scale_factor), Scale(size.height, scale_factor),
       nullptr, nullptr, GetModuleHandle(nullptr), this);
@@ -157,13 +158,11 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
-  // Windows re-adds WS_CAPTION at creation when the style includes
-  // WS_MINIMIZEBOX/WS_MAXIMIZEBOX, so strip it again after creation.
-  SetWindowLongPtr(window, GWL_STYLE,
-                   GetWindowLongPtr(window, GWL_STYLE) & ~WS_CAPTION);
-  SetWindowPos(window, nullptr, 0, 0, 0, 0,
-               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE |
-                   SWP_FRAMECHANGED);
+  // Extend the DWM frame over the whole window: hides the caption while
+  // keeping the native window shadow. WM_NCCALCSIZE keeps the client area
+  // covering the entire window.
+  MARGINS margins{-1, -1, -1, -1};
+  DwmExtendFrameIntoClientArea(window, &margins);
 
   UpdateTheme(window);
 
