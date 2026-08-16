@@ -6,7 +6,10 @@ import 'window_constants.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (args.contains(viewerArgument)) {
+  final isViewer = args.any(
+    (a) => a == viewerArgument || a.startsWith('$viewerArgument:'),
+  );
+  if (isViewer) {
     runApp(const ViewerApp());
   } else {
     runApp(const ManagerApp());

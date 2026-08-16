@@ -109,6 +109,31 @@ class FlutterWindow: NSObject {
         case "window_hide":
             window.orderOut(nil)
             result(nil)
+        case "window_get_bounds":
+            let frame = window.frame
+            result([
+                "x": frame.origin.x,
+                "y": frame.origin.y,
+                "width": frame.size.width,
+                "height": frame.size.height,
+            ])
+        case "window_set_bounds":
+            if let args = arguments as? [String: Any],
+               let x = args["x"] as? Double,
+               let y = args["y"] as? Double,
+               let width = args["width"] as? Double,
+               let height = args["height"] as? Double {
+                window.setFrame(
+                    NSRect(x: x, y: y, width: width, height: height),
+                    display: true)
+            }
+            result(nil)
+        case "window_set_title":
+            if let args = arguments as? [String: Any],
+               let title = args["title"] as? String {
+                window.title = title
+            }
+            result(nil)
         default:
             result(FlutterError(code: "-1", message: "unknown method \(method)", details: nil))
         }

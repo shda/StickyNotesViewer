@@ -17,6 +17,30 @@ Stream<void> get onWindowsChanged => _windowEvent.map((call) {
       return null;
     }).where((event) => event != null);
 
+/// The position and size of a window in screen coordinates.
+class WindowBounds {
+  const WindowBounds({
+    required this.x,
+    required this.y,
+    required this.width,
+    required this.height,
+  });
+
+  factory WindowBounds.fromJson(Map<dynamic, dynamic> json) {
+    return WindowBounds(
+      x: (json['x'] as num).toDouble(),
+      y: (json['y'] as num).toDouble(),
+      width: (json['width'] as num).toDouble(),
+      height: (json['height'] as num).toDouble(),
+    );
+  }
+
+  final double x;
+  final double y;
+  final double width;
+  final double height;
+}
+
 /// The [WindowController] instance that is used to control this window.
 class WindowController {
   WindowController._(this.windowId, this.arguments)
@@ -80,6 +104,19 @@ class WindowController {
     );
   }
 
+  Future<T?> _callWindowMethodResult<T>(String method,
+      [Map<String, dynamic>? arguments]) {
+    assert(windowId.isNotEmpty, 'windowId is empty');
+    assert(method.startsWith('window_'), 'method must start with "window_"');
+    return _channel.invokeMethod<T>(
+      method,
+      {
+        'windowId': windowId,
+        ...?arguments,
+      },
+    );
+  }
+
   Future<void> show() => _callWindowMethod('window_show', {});
 
   Future<void> hide() => _callWindowMethod('window_hide', {});
@@ -91,6 +128,29 @@ class WindowController {
   Future<void> close() => _callWindowMethod('window_close', {});
 
   Future<void> startDrag() => _callWindowMethod('window_start_drag', {});
+
+  /// Returns the normal (restored) bounds of the window, or null if the
+  /// bounds could not be determined.
+  Future<WindowBounds?> getBounds() async {
+    final result =
+        await _callWindowMethodResult<Map<dynamic, dynamic>>(
+            'window_get_bounds', {});
+    if (result == null) {
+      return null;
+    }
+    return WindowBounds.fromJson(result);
+  }
+
+  Future<void> setBounds(WindowBounds bounds) =>
+      _callWindowMethod('window_set_bounds', {
+        'x': bounds.x,
+        'y': bounds.y,
+        'width': bounds.width,
+        'height': bounds.height,
+      });
+
+  Future<void> setTitle(String title) =>
+      _callWindowMethod('window_set_title', {'title': title});
 
   @optionalTypeArgs
   Future<T?> invokeMethod<T>(String method, [dynamic arguments]) =>

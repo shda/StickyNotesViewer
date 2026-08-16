@@ -70,6 +70,55 @@ class FlutterWindowWrapper {
       ::ReleaseCapture();
       ::SendMessage(hwnd_, WM_NCLBUTTONDOWN, HTCAPTION, 0);
       result->Success();
+    } else if (method == "window_get_bounds") {
+      if (hwnd_) {
+        WINDOWPLACEMENT placement{};
+        placement.length = sizeof(placement);
+        ::GetWindowPlacement(hwnd_, &placement);
+        const RECT& rc = placement.rcNormalPosition;
+        flutter::EncodableMap bounds;
+        bounds[flutter::EncodableValue("x")] =
+            flutter::EncodableValue(static_cast<double>(rc.left));
+        bounds[flutter::EncodableValue("y")] =
+            flutter::EncodableValue(static_cast<double>(rc.top));
+        bounds[flutter::EncodableValue("width")] =
+            flutter::EncodableValue(static_cast<double>(rc.right - rc.left));
+        bounds[flutter::EncodableValue("height")] =
+            flutter::EncodableValue(static_cast<double>(rc.bottom - rc.top));
+        result->Success(flutter::EncodableValue(bounds));
+      } else {
+        result->Success();
+      }
+    } else if (method == "window_set_bounds") {
+      if (hwnd_ && arguments) {
+        const auto x = std::get<double>(
+            arguments->at(flutter::EncodableValue("x")));
+        const auto y = std::get<double>(
+            arguments->at(flutter::EncodableValue("y")));
+        const auto width = std::get<double>(
+            arguments->at(flutter::EncodableValue("width")));
+        const auto height = std::get<double>(
+            arguments->at(flutter::EncodableValue("height")));
+        ::SetWindowPos(hwnd_, nullptr, static_cast<int>(x),
+                       static_cast<int>(y), static_cast<int>(width),
+                       static_cast<int>(height),
+                       SWP_NOZORDER | SWP_NOACTIVATE);
+      }
+      result->Success();
+    } else if (method == "window_set_title") {
+      if (hwnd_ && arguments) {
+        const auto& title = std::get<std::string>(
+            arguments->at(flutter::EncodableValue("title")));
+        const int length =
+            ::MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, nullptr, 0);
+        if (length > 0) {
+          std::wstring wide_title(length, 0);
+          ::MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1,
+                                &wide_title[0], length);
+          ::SetWindowTextW(hwnd_, wide_title.c_str());
+        }
+      }
+      result->Success();
     } else {
       result->Error("-1", "unknown method: " + method);
     }
