@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import 'notes_store.dart';
@@ -118,6 +119,11 @@ class _ManagerAppState extends State<ManagerApp> {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: Scaffold(body: SizedBox()));
+    return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
+      home: const Scaffold(body: SizedBox()),
+    );
   }
 }

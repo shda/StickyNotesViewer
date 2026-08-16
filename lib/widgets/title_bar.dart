@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class TitleBar extends StatelessWidget {
@@ -66,8 +67,8 @@ class TitleBar extends StatelessWidget {
                     IconButton(
                       onPressed: onToggleWatch,
                       tooltip: watchEnabled
-                          ? 'Отключить отслеживание файла'
-                          : 'Отслеживать изменения файла',
+                          ? 'watch_on'.tr()
+                          : 'watch_off'.tr(),
                       icon: Icon(
                         watchEnabled
                             ? Icons.visibility
@@ -77,12 +78,12 @@ class TitleBar extends StatelessWidget {
                     ),
                   IconButton(
                     onPressed: onOpenConfig,
-                    tooltip: 'Конфигурация',
+                    tooltip: 'config'.tr(),
                     icon: const Icon(Icons.settings, size: 18),
                   ),
                   IconButton(
                     onPressed: onClose,
-                    tooltip: 'Закрыть',
+                    tooltip: 'close'.tr(),
                     icon: const Icon(Icons.close, size: 18),
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -77,7 +78,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
 
         final noteId = _noteIdFromArguments(controller.arguments);
         if (noteId == null) {
-          await controller.setTitle('Sticky Notes Viewer');
+          await controller.setTitle('app_title'.tr());
         } else {
           final note = await store.findById(noteId);
           final file = note == null ? null : File(note.filePath);
@@ -147,7 +148,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     final result = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['md', 'markdown'],
-      dialogTitle: 'Открыть Markdown файл',
+      dialogTitle: 'pick_file_dialog_title'.tr(),
     );
 
     if (result == null || result.path == null) {
@@ -276,8 +277,11 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sticky Notes Viewer',
+      title: 'app_title'.tr(),
       themeMode: ThemeMode.light,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
         scaffoldBackgroundColor: const Color(0xFF333333),
@@ -291,7 +295,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
             body: Column(
               children: [
                 TitleBar(
-                  title: _fileName ?? 'Sticky Notes Viewer',
+                  title: _fileName ?? 'app_title'.tr(),
                   focused: _interactive,
                   onDragStart: () => _windowController?.startDrag(),
                   onClose: _closeWindow,
@@ -302,11 +306,13 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                 ),
               Expanded(
                 child: _markdown == null
-                    ? const Center(
+                    ? Center(
                         child: Text(
-                          'Откройте Markdown файл',
-                          style:
-                              TextStyle(fontSize: 18, color: Colors.white70),
+                          'empty_note'.tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                          ),
                         ),
                       )
                     : Markdown(
@@ -329,14 +335,14 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                   FloatingActionButton.small(
                     heroTag: 'new-window',
                     onPressed: _openNewWindow,
-                    tooltip: 'Новое окно',
+                    tooltip: 'new_window'.tr(),
                     child: const Icon(Icons.open_in_new),
                   ),
                   const SizedBox(height: 12),
                   FloatingActionButton(
                     heroTag: 'open-file',
                     onPressed: _openFile,
-                    tooltip: 'Открыть файл',
+                    tooltip: 'open_file'.tr(),
                     child: const Icon(Icons.folder_open),
                   ),
                 ],

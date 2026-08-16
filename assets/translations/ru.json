@@ -1,0 +1,13 @@
+{
+  "open_file": "Открыть файл",
+  "new_window": "Новое окно",
+  "pick_file_dialog_title": "Открыть Markdown файл",
+  "empty_note": "Откройте Markdown файл",
+  "close": "Закрыть",
+  "watch_on": "Отключить отслеживание файла",
+  "watch_off": "Отслеживать изменения файла",
+  "config": "Конфигурация",
+  "save": "Сохранить",
+  "language": "Язык",
+  "app_title": "Sticky Notes Viewer"
+}

@@ -45,7 +45,7 @@ class NoteEntry {
   }
 }
 
-Directory _dataDirectory() {
+Directory appDataDirectory() {
   if (Platform.isWindows) {
     final appData = Platform.environment['APPDATA'];
     final base = (appData != null && appData.isNotEmpty)
@@ -68,7 +68,7 @@ class NotesStore {
   final File _file;
 
   static Future<NotesStore> open() async {
-    final dir = _dataDirectory();
+    final dir = appDataDirectory();
     await dir.create(recursive: true);
     return NotesStore._(File('${dir.path}${Platform.pathSeparator}notes.json'));
   }
