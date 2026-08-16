@@ -300,17 +300,19 @@ Win32Window::MessageHandler(HWND hwnd,
     }
 
     case WM_MOUSEACTIVATE:
-      // Raise the note and try to make it the foreground window when
-      // clicked. In some environments (injected input, foreground locks)
-      // the implicit activation is blocked, so the note must at least
-      // come to the front to be usable.
-      ::SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
-                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-      ::SetForegroundWindow(hwnd);
+      // Activate the note normally when clicked. Do NOT force
+      // SetForegroundWindow / SetWindowPos(HWND_TOP) here: those steal
+      // foreground from modal dialogs owned by this window (the native file
+      // picker) and cause focus ping-pong that makes the window flicker.
+      // Returning MA_ACTIVATE activates the window and brings it to front
+      // through the normal Windows activation path.
       return MA_ACTIVATE;
 
     case WM_ACTIVATE:
-      if (child_content_ != nullptr) {
+      // Only take keyboard focus when the window is being activated. Taking
+      // it on deactivation would steal focus from modal dialogs owned by this
+      // window (e.g. the native file picker).
+      if (child_content_ != nullptr && wparam != WA_INACTIVE) {
         SetFocus(child_content_);
       }
       return 0;

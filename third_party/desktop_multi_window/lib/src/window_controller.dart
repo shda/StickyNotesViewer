@@ -149,6 +149,11 @@ class WindowController {
         'height': bounds.height,
       });
 
+  /// Returns the native window handle (HWND on Windows), or null if the
+  /// window does not exist yet.
+  Future<int?> getNativeHandle() =>
+      _callWindowMethodResult<int>('window_get_handle', {});
+
   Future<void> setTitle(String title) =>
       _callWindowMethod('window_set_title', {'title': title});
 

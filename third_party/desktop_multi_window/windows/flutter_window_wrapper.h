@@ -2,6 +2,7 @@
 #define DESKTOP_MULTI_WINDOW_WINDOWS_FLUTTER_WINDOW_WRAPPER_H_
 
 #include <Windows.h>
+#include <cstdint>
 #include <flutter/encodable_value.h>
 #include <flutter/method_channel.h>
 #include <flutter/method_result.h>
@@ -88,6 +89,13 @@ class FlutterWindowWrapper {
         bounds[flutter::EncodableValue("height")] =
             flutter::EncodableValue(static_cast<double>(rc.bottom - rc.top));
         result->Success(flutter::EncodableValue(bounds));
+      } else {
+        result->Success();
+      }
+    } else if (method == "window_get_handle") {
+      if (hwnd_) {
+        result->Success(flutter::EncodableValue(
+            static_cast<int64_t>(reinterpret_cast<intptr_t>(hwnd_))));
       } else {
         result->Success();
       }

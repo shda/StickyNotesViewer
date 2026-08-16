@@ -10,10 +10,11 @@ dependencies:
   desktop_multi_window:
     path: third_party/desktop_multi_window
   easy_localization: ^3.0.8
-  file_picker: ^12.0.0
+  ffi: ^2.1.0
   flutter:
     sdk: flutter
   flutter_markdown_plus: ^1.0.12
+  win32: ^6.4.0
 
 dev_dependencies:
   flutter_test:

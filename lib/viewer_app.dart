@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
@@ -13,6 +12,7 @@ import 'notes_store.dart';
 import 'widgets/config_dialog.dart';
 import 'widgets/title_bar.dart';
 import 'window_constants.dart';
+import 'windows_file_dialog.dart';
 
 class ViewerApp extends StatefulWidget {
   const ViewerApp({super.key});
@@ -145,17 +145,17 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   }
 
   Future<void> _openFile() async {
-    final result = await FilePicker.pickFile(
-      type: FileType.custom,
-      allowedExtensions: ['md', 'markdown'],
+    final nativeHandle = await _windowController?.getNativeHandle();
+    final path = await pickMarkdownFile(
+      parentWindowHandle: nativeHandle,
       dialogTitle: 'pick_file_dialog_title'.tr(),
     );
 
-    if (result == null || result.path == null) {
+    if (path == null) {
       return;
     }
 
-    final file = File(result.path!);
+    final file = File(path);
     final content = await file.readAsString(encoding: utf8);
     final fileName = file.uri.pathSegments.last;
 
