@@ -26,7 +26,10 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   WindowController? _windowController;
   NotesStore? _store;
   Timer? _boundsTimer;
-  bool _focused = true;
+  bool _focused = false;
+  bool _hovered = false;
+
+  bool get _interactive => _focused || _hovered;
 
   @override
   void initState() {
@@ -205,54 +208,59 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
         scaffoldBackgroundColor: const Color(0xFF333333),
         useMaterial3: true,
       ),
-      home: Scaffold(
-        body: Column(
-          children: [
-            TitleBar(
-              title: _fileName ?? 'Sticky Notes Viewer',
-              focused: _focused,
-              onDragStart: () => _windowController?.startDrag(),
-              onClose: _closeWindow,
-            ),
-            Expanded(
-              child: _markdown == null
-                  ? const Center(
-                      child: Text(
-                        'Откройте Markdown файл',
-                        style: TextStyle(fontSize: 18, color: Colors.white70),
+      home: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Scaffold(
+          body: Column(
+            children: [
+              TitleBar(
+                title: _fileName ?? 'Sticky Notes Viewer',
+                focused: _interactive,
+                onDragStart: () => _windowController?.startDrag(),
+                onClose: _closeWindow,
+              ),
+              Expanded(
+                child: _markdown == null
+                    ? const Center(
+                        child: Text(
+                          'Откройте Markdown файл',
+                          style:
+                              TextStyle(fontSize: 18, color: Colors.white70),
+                        ),
+                      )
+                    : Markdown(
+                        data: _markdown!,
+                        selectable: true,
+                        styleSheet: darkMarkdownStyleSheet(context),
                       ),
-                    )
-                  : Markdown(
-                      data: _markdown!,
-                      selectable: true,
-                      styleSheet: darkMarkdownStyleSheet(context),
-                    ),
-            ),
-          ],
-        ),
-        floatingActionButton: IgnorePointer(
-          ignoring: !_focused,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeInOut,
-            opacity: _focused ? 1 : 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton.small(
-                  heroTag: 'new-window',
-                  onPressed: _openNewWindow,
-                  tooltip: 'Новое окно',
-                  child: const Icon(Icons.open_in_new),
-                ),
-                const SizedBox(height: 12),
-                FloatingActionButton(
-                  heroTag: 'open-file',
-                  onPressed: _openFile,
-                  tooltip: 'Открыть файл',
-                  child: const Icon(Icons.folder_open),
-                ),
-              ],
+              ),
+            ],
+          ),
+          floatingActionButton: IgnorePointer(
+            ignoring: !_interactive,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+              opacity: _interactive ? 1 : 0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: 'new-window',
+                    onPressed: _openNewWindow,
+                    tooltip: 'Новое окно',
+                    child: const Icon(Icons.open_in_new),
+                  ),
+                  const SizedBox(height: 12),
+                  FloatingActionButton(
+                    heroTag: 'open-file',
+                    onPressed: _openFile,
+                    tooltip: 'Открыть файл',
+                    child: const Icon(Icons.folder_open),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

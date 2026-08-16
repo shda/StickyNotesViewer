@@ -299,6 +299,16 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
     }
 
+    case WM_MOUSEACTIVATE:
+      // Raise the note and try to make it the foreground window when
+      // clicked. In some environments (injected input, foreground locks)
+      // the implicit activation is blocked, so the note must at least
+      // come to the front to be usable.
+      ::SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+      ::SetForegroundWindow(hwnd);
+      return MA_ACTIVATE;
+
     case WM_ACTIVATE:
       if (child_content_ != nullptr) {
         SetFocus(child_content_);

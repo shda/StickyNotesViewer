@@ -58,7 +58,7 @@ std::string MultiWindowManager::Create(const flutter::EncodableMap* args) {
   }
 
   ::ShowWindow(flutter_window->GetHandle(),
-               config.hidden_at_launch ? SW_HIDE : SW_SHOW);
+               config.hidden_at_launch ? SW_HIDE : SW_SHOWNOACTIVATE);
 
   auto wrapper = std::make_unique<FlutterWindowWrapper>(
       window_id, flutter_window->GetHandle(), config.arguments);

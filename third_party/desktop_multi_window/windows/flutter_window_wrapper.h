@@ -43,7 +43,9 @@ class FlutterWindowWrapper {
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
     if (method == "window_show") {
       if (hwnd_) {
-        ::ShowWindow(hwnd_, SW_SHOW);
+        ::ShowWindow(hwnd_, SW_SHOWNOACTIVATE);
+        ::SetWindowPos(hwnd_, HWND_BOTTOM, 0, 0, 0, 0,
+                       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
       }
       result->Success();
     } else if (method == "window_hide") {

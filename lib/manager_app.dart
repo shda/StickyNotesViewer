@@ -17,20 +17,25 @@ class ManagerApp extends StatefulWidget {
 class _ManagerAppState extends State<ManagerApp> {
   StreamSubscription<void>? _windowsSub;
   Timer? _debounce;
-  bool _creatingViewer = false;
   bool _restoring = false;
 
   @override
   void initState() {
     super.initState();
-    _hideManagerWindow();
-    _restoreNotes();
-    _windowsSub = onWindowsChanged.listen((_) => _scheduleEnsureViewer());
+    _restoring = true;
+    _startup();
+    _windowsSub = onWindowsChanged.listen((_) => _scheduleWindowsCheck());
   }
 
-  void _hideManagerWindow() {
+  Future<void> _startup() async {
+    await _hideManagerWindow();
+    await _restoreNotes();
+  }
+
+  Future<void> _hideManagerWindow() async {
     WidgetsBinding.instance.addPostFrameCallback((_) => _hideNow());
-    Future<void>.delayed(const Duration(milliseconds: 500), _hideNow);
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    await _hideNow();
   }
 
   Future<void> _hideNow() async {
@@ -41,7 +46,6 @@ class _ManagerAppState extends State<ManagerApp> {
   }
 
   Future<void> _restoreNotes() async {
-    _restoring = true;
     try {
       final store = await NotesStore.open();
       final notes = await store.load();
@@ -70,19 +74,19 @@ class _ManagerAppState extends State<ManagerApp> {
       } catch (_) {}
     } finally {
       _restoring = false;
+      _scheduleWindowsCheck();
     }
   }
 
-  void _scheduleEnsureViewer() {
+  void _scheduleWindowsCheck() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), _ensureViewer);
+    _debounce = Timer(const Duration(milliseconds: 200), _checkWindowsAndExit);
   }
 
-  Future<void> _ensureViewer() async {
-    if (_creatingViewer || _restoring) {
+  Future<void> _checkWindowsAndExit() async {
+    if (_restoring) {
       return;
     }
-    _creatingViewer = true;
     try {
       final windows = await WindowController.getAll();
       final hasViewer = windows.any(
@@ -91,12 +95,9 @@ class _ManagerAppState extends State<ManagerApp> {
             w.arguments.startsWith('$viewerArgument:'),
       );
       if (!hasViewer) {
-        await _createFreshViewer();
+        exit(0);
       }
-    } catch (_) {
-    } finally {
-      _creatingViewer = false;
-    }
+    } catch (_) {}
   }
 
   Future<void> _createFreshViewer() async {
