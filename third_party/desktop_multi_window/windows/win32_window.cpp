@@ -187,11 +187,69 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
     auto that = static_cast<Win32Window*>(window_struct->lpCreateParams);
     EnableFullDpiSupportIfAvailable(window);
     that->window_handle_ = window;
+  } else if (message == WM_NCHITTEST) {
+    if (Win32Window* that = GetThisFromHandle(window)) {
+      return that->HandleNonClientHitTest(window, lparam);
+    }
   } else if (Win32Window* that = GetThisFromHandle(window)) {
     return that->MessageHandler(window, message, wparam, lparam);
   }
 
   return DefWindowProc(window, message, wparam, lparam);
+}
+
+LRESULT Win32Window::HandleNonClientHitTest(HWND hwnd, LPARAM lparam) noexcept {
+  // The client area is inset by the resize border margin (see WM_NCCALCSIZE),
+  // so provide resize borders for points inside that margin.
+  if (::IsZoomed(hwnd)) {
+    return HTCLIENT;
+  }
+
+  POINT pt = {static_cast<SHORT>(LOWORD(lparam)),
+              static_cast<SHORT>(HIWORD(lparam))};
+  ::ScreenToClient(hwnd, &pt);
+
+  RECT rc;
+  ::GetClientRect(hwnd, &rc);
+
+  const int margin = GetResizeBorderMargin(hwnd);
+
+  const bool left = pt.x < margin;
+  const bool right = pt.x >= rc.right - margin;
+  const bool top = pt.y < margin;
+  const bool bottom = pt.y >= rc.bottom - margin;
+
+  if (top && left) {
+    return HTTOPLEFT;
+  }
+  if (top && right) {
+    return HTTOPRIGHT;
+  }
+  if (bottom && left) {
+    return HTBOTTOMLEFT;
+  }
+  if (bottom && right) {
+    return HTBOTTOMRIGHT;
+  }
+  if (top) {
+    return HTTOP;
+  }
+  if (bottom) {
+    return HTBOTTOM;
+  }
+  if (left) {
+    return HTLEFT;
+  }
+  if (right) {
+    return HTRIGHT;
+  }
+  return HTCLIENT;
+}
+
+int Win32Window::GetResizeBorderMargin(HWND hwnd) {
+  HMONITOR monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+  UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
+  return static_cast<int>(8.0 * dpi / 96.0);
 }
 
 LRESULT

@@ -64,6 +64,13 @@ class Win32Window {
                                  WPARAM const wparam,
                                  LPARAM const lparam) noexcept;
 
+  // Handles WM_NCHITTEST for frameless windows: returns resize border codes
+  // near the window edges.
+  LRESULT HandleNonClientHitTest(HWND window, LPARAM lparam) noexcept;
+
+  // Returns the DPI-scaled width of the invisible resize border.
+  static int GetResizeBorderMargin(HWND window);
+
   // Called when CreateAndShow is called, allowing subclass window-related
   // setup. Subclasses should return false if setup fails.
   virtual bool OnCreate();
