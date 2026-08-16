@@ -7,7 +7,8 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
-  desktop_multi_window: ^0.3.0
+  desktop_multi_window:
+    path: third_party/desktop_multi_window
   file_picker: ^12.0.0
   flutter:
     sdk: flutter

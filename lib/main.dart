@@ -100,6 +100,26 @@ class ViewerApp extends StatefulWidget {
 class _ViewerAppState extends State<ViewerApp> {
   String? _markdown;
   String? _fileName;
+  WindowController? _windowController;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showWindow());
+  }
+
+  Future<void> _showWindow() async {
+    for (var attempt = 0; attempt < 30; attempt++) {
+      try {
+        final controller = await WindowController.fromCurrentEngine();
+        _windowController = controller;
+        await controller.show();
+        return;
+      } catch (_) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    }
+  }
 
   Future<void> _openFile() async {
     final result = await FilePicker.pickFile(
@@ -125,7 +145,49 @@ class _ViewerAppState extends State<ViewerApp> {
     await WindowController.create(
       const WindowConfiguration(
         arguments: viewerArgument,
-        hiddenAtLaunch: false,
+        hiddenAtLaunch: true,
+      ),
+    );
+  }
+
+  Widget _buildTitleBar() {
+    return Container(
+      height: 40,
+      color: Colors.amber.shade200,
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanStart: (_) => _windowController?.startDrag(),
+              child: Center(
+                child: Text(
+                  _fileName ?? 'Sticky Notes Viewer',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => _windowController?.minimize(),
+            tooltip: 'Свернуть',
+            icon: const Icon(Icons.minimize, size: 18),
+          ),
+          IconButton(
+            onPressed: () => _windowController?.maximize(),
+            tooltip: 'Развернуть',
+            icon: const Icon(Icons.crop_square, size: 18),
+          ),
+          IconButton(
+            onPressed: () => _windowController?.close(),
+            tooltip: 'Закрыть',
+            icon: const Icon(Icons.close, size: 18),
+          ),
+        ],
       ),
     );
   }
@@ -141,60 +203,61 @@ class _ViewerAppState extends State<ViewerApp> {
         useMaterial3: true,
       ),
       home: Scaffold(
-        appBar: _fileName == null
-            ? null
-            : AppBar(
-                title: Text(_fileName!),
-                centerTitle: true,
-              ),
-        body: _markdown == null
-            ? const Center(
-                child: Text(
-                  'Откройте Markdown файл',
-                  style: TextStyle(fontSize: 18),
-                ),
-              )
-            : Markdown(
-                data: _markdown!,
-                selectable: true,
-                styleSheet: MarkdownStyleSheet.fromTheme(
-                  Theme.of(context),
-                ).copyWith(
-                  p: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                    height: 1.4,
-                  ),
-                  h1: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  h2: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  h3: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  code: const TextStyle(
-                    color: Colors.black87,
-                    backgroundColor: Color(0xFFF0F0F0),
-                  ),
-                  codeblockDecoration: const BoxDecoration(
-                    color: Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                  ),
-                  codeblockPadding: const EdgeInsets.all(12),
-                  h1Padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  h3Padding: const EdgeInsets.only(top: 12, bottom: 6),
-                  pPadding: const EdgeInsets.symmetric(vertical: 6),
-                ),
-              ),
+        body: Column(
+          children: [
+            _buildTitleBar(),
+            Expanded(
+              child: _markdown == null
+                  ? const Center(
+                      child: Text(
+                        'Откройте Markdown файл',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    )
+                  : Markdown(
+                      data: _markdown!,
+                      selectable: true,
+                      styleSheet: MarkdownStyleSheet.fromTheme(
+                        Theme.of(context),
+                      ).copyWith(
+                        p: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          height: 1.4,
+                        ),
+                        h1: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h2: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        h3: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        code: const TextStyle(
+                          color: Colors.black87,
+                          backgroundColor: Color(0xFFF0F0F0),
+                        ),
+                        codeblockDecoration: const BoxDecoration(
+                          color: Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
+                        ),
+                        codeblockPadding: const EdgeInsets.all(12),
+                        h1Padding: const EdgeInsets.only(top: 16, bottom: 8),
+                        h2Padding: const EdgeInsets.only(top: 16, bottom: 8),
+                        h3Padding: const EdgeInsets.only(top: 12, bottom: 6),
+                        pPadding: const EdgeInsets.symmetric(vertical: 6),
+                      ),
+                    ),
+            ),
+          ],
+        ),
         floatingActionButton: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
