@@ -7,12 +7,18 @@ class TitleBar extends StatelessWidget {
     required this.focused,
     required this.onDragStart,
     required this.onClose,
+    this.showWatchButton = false,
+    this.watchEnabled = false,
+    this.onToggleWatch,
   });
 
   final String title;
   final bool focused;
   final VoidCallback onDragStart;
   final VoidCallback onClose;
+  final bool showWatchButton;
+  final bool watchEnabled;
+  final VoidCallback? onToggleWatch;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +57,28 @@ class TitleBar extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeInOut,
               opacity: focused ? 1 : 0,
-              child: IconButton(
-                onPressed: onClose,
-                tooltip: 'Закрыть',
-                icon: const Icon(Icons.close, size: 18),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showWatchButton)
+                    IconButton(
+                      onPressed: onToggleWatch,
+                      tooltip: watchEnabled
+                          ? 'Отключить отслеживание файла'
+                          : 'Отслеживать изменения файла',
+                      icon: Icon(
+                        watchEnabled
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        size: 18,
+                      ),
+                    ),
+                  IconButton(
+                    onPressed: onClose,
+                    tooltip: 'Закрыть',
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+                ],
               ),
             ),
           ),

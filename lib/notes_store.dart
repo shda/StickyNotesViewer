@@ -9,6 +9,7 @@ class NoteEntry {
     this.y = 0,
     this.width = 800,
     this.height = 600,
+    this.watchEnabled = false,
   });
 
   factory NoteEntry.fromJson(Map<String, dynamic> json) {
@@ -19,6 +20,7 @@ class NoteEntry {
       y: (json['y'] as num?)?.toDouble() ?? 0,
       width: (json['width'] as num?)?.toDouble() ?? 800,
       height: (json['height'] as num?)?.toDouble() ?? 600,
+      watchEnabled: json['watchEnabled'] as bool? ?? false,
     );
   }
 
@@ -28,6 +30,7 @@ class NoteEntry {
   double y;
   double width;
   double height;
+  bool watchEnabled;
 
   Map<String, dynamic> toJson() {
     return {
@@ -37,6 +40,7 @@ class NoteEntry {
       'y': y,
       'width': width,
       'height': height,
+      'watchEnabled': watchEnabled,
     };
   }
 }
@@ -157,6 +161,16 @@ class NotesStore {
       return;
     }
     notes[index].filePath = filePath;
+    await _save(notes);
+  }
+
+  Future<void> updateWatchEnabled(String id, bool watchEnabled) async {
+    final notes = await load();
+    final index = notes.indexWhere((n) => n.id == id);
+    if (index < 0) {
+      return;
+    }
+    notes[index].watchEnabled = watchEnabled;
     await _save(notes);
   }
 

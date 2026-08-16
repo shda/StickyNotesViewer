@@ -22,12 +22,16 @@ class ViewerApp extends StatefulWidget {
 class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   String? _markdown;
   String? _fileName;
+  String? _filePath;
   String? _noteId;
   WindowController? _windowController;
   NotesStore? _store;
   Timer? _boundsTimer;
+  Timer? _watchTimer;
+  DateTime? _lastModified;
   bool _focused = false;
   bool _hovered = false;
+  bool _watchEnabled = false;
 
   bool get _interactive => _focused || _hovered;
 
@@ -41,6 +45,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     _boundsTimer?.cancel();
+    _watchTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -95,7 +100,12 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
             _noteId = noteId;
             _markdown = content;
             _fileName = fileName;
+            _filePath = note.filePath;
+            _watchEnabled = note.watchEnabled;
           });
+          if (_watchEnabled) {
+            _startWatching();
+          }
         }
 
         _boundsTimer = Timer.periodic(
@@ -150,6 +160,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     setState(() {
       _markdown = content;
       _fileName = fileName;
+      _filePath = file.path;
     });
 
     final store = _store;
@@ -167,6 +178,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
           y: bounds?.y ?? 0,
           width: bounds?.width ?? 800,
           height: bounds?.height ?? 600,
+          watchEnabled: _watchEnabled,
         );
         await store.add(note);
         _noteId = note.id;
@@ -174,7 +186,68 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
         await store.updateFilePath(_noteId!, file.path);
       }
       await controller.setTitle(fileName);
+      if (_watchEnabled) {
+        _startWatching();
+      }
     } catch (_) {}
+  }
+
+  void _startWatching() {
+    _stopWatching();
+    final path = _filePath;
+    if (path == null || !_watchEnabled) {
+      return;
+    }
+    _lastModified = null;
+    _watchTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _checkFileChanged(),
+    );
+    _checkFileChanged();
+  }
+
+  void _stopWatching() {
+    _watchTimer?.cancel();
+    _watchTimer = null;
+  }
+
+  Future<void> _checkFileChanged() async {
+    final path = _filePath;
+    if (path == null || !_watchEnabled) {
+      return;
+    }
+    try {
+      final file = File(path);
+      if (!await file.exists()) {
+        return;
+      }
+      final modified = await file.lastModified();
+      if (_lastModified != null && modified == _lastModified) {
+        return;
+      }
+      _lastModified = modified;
+      final content = await file.readAsString(encoding: utf8);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _markdown = content);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleWatch() async {
+    setState(() => _watchEnabled = !_watchEnabled);
+    final store = _store;
+    final noteId = _noteId;
+    if (store != null && noteId != null) {
+      try {
+        await store.updateWatchEnabled(noteId, _watchEnabled);
+      } catch (_) {}
+    }
+    if (_watchEnabled) {
+      _startWatching();
+    } else {
+      _stopWatching();
+    }
   }
 
   Future<void> _openNewWindow() async {
@@ -188,6 +261,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
 
   Future<void> _closeWindow() async {
     _boundsTimer?.cancel();
+    _stopWatching();
     final store = _store;
     final noteId = _noteId;
     if (store != null && noteId != null) {
@@ -219,6 +293,9 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                 focused: _interactive,
                 onDragStart: () => _windowController?.startDrag(),
                 onClose: _closeWindow,
+                showWatchButton: _fileName != null,
+                watchEnabled: _watchEnabled,
+                onToggleWatch: _toggleWatch,
               ),
               Expanded(
                 child: _markdown == null
