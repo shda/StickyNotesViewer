@@ -274,6 +274,32 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     await _windowController?.close();
   }
 
+  String? get _markdownImageDirectory {
+    final path = _filePath;
+    if (path == null) {
+      return null;
+    }
+    final dir = File(path).parent.path.replaceAll('\\', '/');
+    return 'file:///$dir/';
+  }
+
+  String _normalizeMarkdownImages(String md) {
+    // Translate Obsidian-style sizing "![alt|W](src)" / "![alt|WxH](src)" into
+    // the flutter_markdown_plus syntax "![alt](src#WxH)" so the default image
+    // builder applies the requested dimensions.
+    return md.replaceAllMapped(
+      RegExp(r'!\[([^\]]*)\|(\d+)(?:x(\d+))?\]\(([^)]+)\)'),
+      (m) {
+        final alt = m.group(1)!;
+        final width = m.group(2)!;
+        final height = m.group(3);
+        final src = m.group(4)!;
+        final dim = '${width}x${height ?? width}';
+        return '![$alt]($src#$dim)';
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -316,9 +342,10 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                         ),
                       )
                     : Markdown(
-                        data: _markdown!,
+                        data: _normalizeMarkdownImages(_markdown!),
                         selectable: true,
                         styleSheet: darkMarkdownStyleSheet(context),
+                        imageDirectory: _markdownImageDirectory,
                       ),
               ),
             ],
