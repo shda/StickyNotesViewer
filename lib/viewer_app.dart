@@ -11,6 +11,7 @@ import 'markdown_styles.dart';
 import 'notes_store.dart';
 import 'widgets/config_dialog.dart';
 import 'widgets/title_bar.dart';
+import 'widgets/window_settings_dialog.dart';
 import 'window_constants.dart';
 import 'windows_file_dialog.dart';
 
@@ -30,10 +31,13 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   NotesStore? _store;
   Timer? _boundsTimer;
   Timer? _watchTimer;
+  Timer? _settingsDebounce;
   DateTime? _lastModified;
   bool _focused = false;
   bool _hovered = false;
   bool _watchEnabled = false;
+  double _fontScale = 1.0;
+  Color _titleColor = kDefaultTitleColor;
 
   bool get _interactive => _focused || _hovered;
 
@@ -48,6 +52,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   void dispose() {
     _boundsTimer?.cancel();
     _watchTimer?.cancel();
+    _settingsDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -104,6 +109,8 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
             _fileName = fileName;
             _filePath = note.filePath;
             _watchEnabled = note.watchEnabled;
+            _fontScale = note.fontScale;
+            _titleColor = Color(note.titleColor);
           });
           if (_watchEnabled) {
             _startWatching();
@@ -181,6 +188,8 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
           width: bounds?.width ?? 800,
           height: bounds?.height ?? 600,
           watchEnabled: _watchEnabled,
+          fontScale: _fontScale,
+          titleColor: _titleColor.toARGB32(),
         );
         await store.add(note);
         _noteId = note.id;
@@ -250,6 +259,41 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     } else {
       _stopWatching();
     }
+  }
+
+  Future<void> _openWindowSettings(BuildContext context) {
+    return showWindowSettingsDialog(
+      context,
+      initialFontScale: _fontScale,
+      initialTitleColor: _titleColor,
+      onChanged: _onWindowSettingsChanged,
+    );
+  }
+
+  void _onWindowSettingsChanged(double fontScale, Color titleColor) {
+    setState(() {
+      _fontScale = fontScale;
+      _titleColor = titleColor;
+    });
+    _settingsDebounce?.cancel();
+    _settingsDebounce = Timer(const Duration(milliseconds: 500), () {
+      _persistWindowSettings();
+    });
+  }
+
+  Future<void> _persistWindowSettings() async {
+    final store = _store;
+    final noteId = _noteId;
+    if (store == null || noteId == null) {
+      return;
+    }
+    try {
+      await store.updateWindowSettings(
+        noteId,
+        fontScale: _fontScale,
+        titleColor: _titleColor.toARGB32(),
+      );
+    } catch (_) {}
   }
 
   Future<void> _openNewWindow() async {
@@ -323,9 +367,11 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                 TitleBar(
                   title: _fileName ?? 'app_title'.tr(),
                   focused: _interactive,
+                  color: _titleColor,
                   onDragStart: () => _windowController?.startDrag(),
                   onClose: _closeWindow,
                   onOpenConfig: () => showConfigDialog(context),
+                  onOpenWindowSettings: () => _openWindowSettings(context),
                   showWatchButton: _fileName != null,
                   watchEnabled: _watchEnabled,
                   onToggleWatch: _toggleWatch,
@@ -344,7 +390,10 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                     : Markdown(
                         data: _normalizeMarkdownImages(_markdown!),
                         selectable: true,
-                        styleSheet: darkMarkdownStyleSheet(context),
+                        styleSheet: darkMarkdownStyleSheet(
+                          context,
+                          scale: _fontScale,
+                        ),
                         imageDirectory: _markdownImageDirectory,
                       ),
               ),

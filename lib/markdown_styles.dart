@@ -1,28 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
-MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context) {
+MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context,
+    {double scale = 1.0}) {
   return MarkdownStyleSheet.fromTheme(
     Theme.of(context),
   ).copyWith(
-    p: const TextStyle(
+    p: TextStyle(
       color: Colors.white,
-      fontSize: 16,
+      fontSize: 16 * scale,
       height: 1.4,
     ),
-    h1: const TextStyle(
+    h1: TextStyle(
       color: Colors.white,
-      fontSize: 28,
+      fontSize: 28 * scale,
       fontWeight: FontWeight.bold,
     ),
-    h2: const TextStyle(
+    h2: TextStyle(
       color: Colors.white,
-      fontSize: 24,
+      fontSize: 24 * scale,
       fontWeight: FontWeight.bold,
     ),
-    h3: const TextStyle(
+    h3: TextStyle(
       color: Colors.white,
-      fontSize: 20,
+      fontSize: 20 * scale,
       fontWeight: FontWeight.bold,
     ),
     code: const TextStyle(
@@ -38,9 +39,9 @@ MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context) {
       color: Colors.white,
       fontWeight: FontWeight.w600,
     ),
-    tableBody: const TextStyle(
+    tableBody: TextStyle(
       color: Colors.white,
-      fontSize: 16,
+      fontSize: 16 * scale,
     ),
     tableBorder: TableBorder.all(color: Colors.white24),
     h1Padding: const EdgeInsets.only(top: 16, bottom: 8),

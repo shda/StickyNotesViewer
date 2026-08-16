@@ -9,9 +9,11 @@ class TitleBar extends StatelessWidget {
     required this.onDragStart,
     required this.onClose,
     required this.onOpenConfig,
+    required this.onOpenWindowSettings,
     this.showWatchButton = false,
     this.watchEnabled = false,
     this.onToggleWatch,
+    this.color = const Color(0xFFFFE082),
   });
 
   final String title;
@@ -19,9 +21,11 @@ class TitleBar extends StatelessWidget {
   final VoidCallback onDragStart;
   final VoidCallback onClose;
   final VoidCallback onOpenConfig;
+  final VoidCallback onOpenWindowSettings;
   final bool showWatchButton;
   final bool watchEnabled;
   final VoidCallback? onToggleWatch;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +34,7 @@ class TitleBar extends StatelessWidget {
       curve: Curves.easeInOut,
       height: focused ? 40 : 10,
       clipBehavior: Clip.hardEdge,
-      color: Colors.amber.shade200,
+      color: color,
       child: Row(
         children: [
           Expanded(
@@ -80,6 +84,11 @@ class TitleBar extends StatelessWidget {
                     onPressed: onOpenConfig,
                     tooltip: 'config'.tr(),
                     icon: const Icon(Icons.settings, size: 18),
+                  ),
+                  IconButton(
+                    onPressed: onOpenWindowSettings,
+                    tooltip: 'window_settings'.tr(),
+                    icon: const Icon(Icons.more_horiz, size: 20),
                   ),
                   IconButton(
                     onPressed: onClose,

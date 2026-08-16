@@ -10,6 +10,8 @@ class NoteEntry {
     this.width = 800,
     this.height = 600,
     this.watchEnabled = false,
+    this.fontScale = 1.0,
+    this.titleColor = 0xFFFFE082,
   });
 
   factory NoteEntry.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,8 @@ class NoteEntry {
       width: (json['width'] as num?)?.toDouble() ?? 800,
       height: (json['height'] as num?)?.toDouble() ?? 600,
       watchEnabled: json['watchEnabled'] as bool? ?? false,
+      fontScale: (json['fontScale'] as num?)?.toDouble() ?? 1.0,
+      titleColor: json['titleColor'] as int? ?? 0xFFFFE082,
     );
   }
 
@@ -31,6 +35,8 @@ class NoteEntry {
   double width;
   double height;
   bool watchEnabled;
+  double fontScale;
+  int titleColor;
 
   Map<String, dynamic> toJson() {
     return {
@@ -41,6 +47,8 @@ class NoteEntry {
       'width': width,
       'height': height,
       'watchEnabled': watchEnabled,
+      'fontScale': fontScale,
+      'titleColor': titleColor,
     };
   }
 }
@@ -171,6 +179,21 @@ class NotesStore {
       return;
     }
     notes[index].watchEnabled = watchEnabled;
+    await _save(notes);
+  }
+
+  Future<void> updateWindowSettings(
+    String id, {
+    required double fontScale,
+    required int titleColor,
+  }) async {
+    final notes = await load();
+    final index = notes.indexWhere((n) => n.id == id);
+    if (index < 0) {
+      return;
+    }
+    notes[index].fontScale = fontScale;
+    notes[index].titleColor = titleColor;
     await _save(notes);
   }
 

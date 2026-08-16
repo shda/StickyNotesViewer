@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../app_settings.dart';
+import '../autostart.dart';
 
 Future<void> showConfigDialog(BuildContext context) {
   return showDialog<void>(
@@ -10,8 +11,21 @@ Future<void> showConfigDialog(BuildContext context) {
   );
 }
 
-class ConfigDialog extends StatelessWidget {
+class ConfigDialog extends StatefulWidget {
   const ConfigDialog({super.key});
+
+  @override
+  State<ConfigDialog> createState() => _ConfigDialogState();
+}
+
+class _ConfigDialogState extends State<ConfigDialog> {
+  late bool _autostart;
+
+  @override
+  void initState() {
+    super.initState();
+    _autostart = Autostart.isEnabled();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,33 +62,62 @@ class ConfigDialog extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'language'.tr(),
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    Row(
+                      children: [
+                        Text(
+                          'language'.tr(),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(width: 16),
+                        DropdownButton<String>(
+                          dropdownColor: const Color(0xFF4A4A4A),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 14),
+                          value: context.locale.languageCode,
+                          items: kSupportedLanguageCodes
+                              .map(
+                                (code) => DropdownMenuItem<String>(
+                                  value: code,
+                                  child: Text(_languageName(code)),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (code) async {
+                            if (code == null) {
+                              return;
+                            }
+                            await context.setLocale(Locale(code));
+                            await AppSettings.open()
+                                .then((s) => s.saveLanguageCode(code));
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    DropdownButton<String>(
-                      dropdownColor: const Color(0xFF4A4A4A),
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      value: context.locale.languageCode,
-                      items: kSupportedLanguageCodes
-                          .map(
-                            (code) => DropdownMenuItem<String>(
-                              value: code,
-                              child: Text(_languageName(code)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (code) async {
-                        if (code == null) {
-                          return;
-                        }
-                        await context.setLocale(Locale(code));
-                        await AppSettings.open()
-                            .then((s) => s.saveLanguageCode(code));
-                      },
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white12, height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'autostart'.tr(),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 14),
+                          ),
+                        ),
+                        Switch(
+                          value: _autostart,
+                          onChanged: (v) {
+                            setState(() => _autostart = v);
+                            Autostart.setEnabled(v);
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

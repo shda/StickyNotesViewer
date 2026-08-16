@@ -9,5 +9,9 @@
   "config": "Settings",
   "save": "Save",
   "language": "Language",
+  "window_settings": "Window settings",
+  "font_size": "Font size",
+  "title_color": "Title color",
+  "autostart": "Launch at system startup",
   "app_title": "Sticky Notes Viewer"
 }
