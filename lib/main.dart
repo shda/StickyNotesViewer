@@ -173,16 +173,6 @@ class _ViewerAppState extends State<ViewerApp> {
             ),
           ),
           IconButton(
-            onPressed: () => _windowController?.minimize(),
-            tooltip: 'Свернуть',
-            icon: const Icon(Icons.minimize, size: 18),
-          ),
-          IconButton(
-            onPressed: () => _windowController?.maximize(),
-            tooltip: 'Развернуть',
-            icon: const Icon(Icons.crop_square, size: 18),
-          ),
-          IconButton(
             onPressed: () => _windowController?.close(),
             tooltip: 'Закрыть',
             icon: const Icon(Icons.close, size: 18),
@@ -199,7 +189,7 @@ class _ViewerAppState extends State<ViewerApp> {
       themeMode: ThemeMode.light,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: const Color(0xFF333333),
         useMaterial3: true,
       ),
       home: Scaffold(
