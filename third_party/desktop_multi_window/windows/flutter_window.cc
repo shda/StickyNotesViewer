@@ -14,17 +14,10 @@
 namespace {
 
 constexpr int kResizeBorderWidth = 8;
-constexpr int kMinResizeWidth = 200;
-constexpr int kMinResizeHeight = 150;
-
 constexpr const wchar_t* kChildResizeStateProp = L"DMWChildResizeState";
 
 struct ChildResizeState {
   WNDPROC original_proc = nullptr;
-  bool active = false;
-  int mode = 0;
-  POINT start_cursor{};
-  RECT start_rect{};
 };
 
 ChildResizeState* GetChildResizeState(HWND hwnd) {
@@ -42,10 +35,16 @@ int GetResizeMargin(HWND top) {
   return static_cast<int>(kResizeBorderWidth * dpi / 96.0);
 }
 
-// Subclasses the Flutter view (the child window that covers the whole
-// client area of the frameless window) to provide edge hit-testing and
-// manual resizing, because for points inside the client area the system
-// never consults the top-level window's WM_NCHITTEST.
+// Subclasses the Flutter view (the child window that covers the whole client
+// area of the frameless window) to provide edge hit-testing.
+//
+// The actual resize is delegated to the system: on a non-client button-down in
+// the resize margin we forward the message to the top-level window, whose
+// default procedure performs a native modal resize. Windows then handles mouse
+// capture, tracking, and button release itself, so there is no manual state
+// that can get stuck (the previous manual implementation lost mouse capture
+// during fast drags and never received WM_LBUTTONUP, leaving the window stuck
+// in "resizing" mode with a resize cursor).
 LRESULT CALLBACK ChildWndProc(HWND hwnd,
                               UINT message,
                               WPARAM wparam,
@@ -100,62 +99,10 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd,
     }
 
     case WM_NCLBUTTONDOWN:
-      if (state && top && IsResizeHit(static_cast<int>(wparam))) {
-        state->active = true;
-        state->mode = static_cast<int>(wparam);
-        ::GetCursorPos(&state->start_cursor);
-        ::GetWindowRect(top, &state->start_rect);
-        ::SetCapture(hwnd);
-        return 0;
-      }
-      break;
-
-    case WM_MOUSEMOVE:
-    case WM_NCMOUSEMOVE: {
-      if (state && state->active) {
-        POINT cur;
-        ::GetCursorPos(&cur);
-        const int dx = cur.x - state->start_cursor.x;
-        const int dy = cur.y - state->start_cursor.y;
-        RECT nr = state->start_rect;
-        const int mode = state->mode;
-        if (mode == HTLEFT || mode == HTTOPLEFT || mode == HTBOTTOMLEFT) {
-          nr.left += dx;
-          if (nr.right - nr.left < kMinResizeWidth) {
-            nr.left = nr.right - kMinResizeWidth;
-          }
-        }
-        if (mode == HTRIGHT || mode == HTTOPRIGHT || mode == HTBOTTOMRIGHT) {
-          nr.right += dx;
-          if (nr.right - nr.left < kMinResizeWidth) {
-            nr.right = nr.left + kMinResizeWidth;
-          }
-        }
-        if (mode == HTTOP || mode == HTTOPLEFT || mode == HTTOPRIGHT) {
-          nr.top += dy;
-          if (nr.bottom - nr.top < kMinResizeHeight) {
-            nr.top = nr.bottom - kMinResizeHeight;
-          }
-        }
-        if (mode == HTBOTTOM || mode == HTBOTTOMLEFT ||
-            mode == HTBOTTOMRIGHT) {
-          nr.bottom += dy;
-          if (nr.bottom - nr.top < kMinResizeHeight) {
-            nr.bottom = nr.top + kMinResizeHeight;
-          }
-        }
-        ::SetWindowPos(top, nullptr, nr.left, nr.top, nr.right - nr.left,
-                       nr.bottom - nr.top, SWP_NOZORDER | SWP_NOACTIVATE);
-        return 0;
-      }
-      break;
-    }
-
-    case WM_LBUTTONUP:
-    case WM_NCLBUTTONUP:
-      if (state && state->active) {
-        state->active = false;
+      if (top && IsResizeHit(static_cast<int>(wparam))) {
+        // Let Windows perform the resize natively on the top-level window.
         ::ReleaseCapture();
+        ::SendMessage(top, WM_NCLBUTTONDOWN, wparam, lparam);
         return 0;
       }
       break;
@@ -201,8 +148,9 @@ bool FlutterWindow::OnCreate() {
   auto view_handle = flutter_controller_->view()->GetNativeWindow();
   SetChildContent(view_handle);
 
-  // Subclass the Flutter view to provide resize hit-testing and manual
-  // resizing for the frameless window.
+  // Subclass the Flutter view to provide resize hit-testing for the frameless
+  // window (the top-level window's own WM_NCHITTEST is never consulted for
+  // points inside the client area).
   auto* state = new ChildResizeState();
   ::SetProp(view_handle, kChildResizeStateProp, state);
   state->original_proc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(
