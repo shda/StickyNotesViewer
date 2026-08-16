@@ -9,6 +9,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import 'markdown_styles.dart';
 import 'notes_store.dart';
+import 'widgets/config_dialog.dart';
 import 'widgets/title_bar.dart';
 import 'window_constants.dart';
 
@@ -282,21 +283,23 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
         scaffoldBackgroundColor: const Color(0xFF333333),
         useMaterial3: true,
       ),
-      home: MouseRegion(
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: Scaffold(
-          body: Column(
-            children: [
-              TitleBar(
-                title: _fileName ?? 'Sticky Notes Viewer',
-                focused: _interactive,
-                onDragStart: () => _windowController?.startDrag(),
-                onClose: _closeWindow,
-                showWatchButton: _fileName != null,
-                watchEnabled: _watchEnabled,
-                onToggleWatch: _toggleWatch,
-              ),
+      home: Builder(
+        builder: (context) => MouseRegion(
+          onEnter: (_) => setState(() => _hovered = true),
+          onExit: (_) => setState(() => _hovered = false),
+          child: Scaffold(
+            body: Column(
+              children: [
+                TitleBar(
+                  title: _fileName ?? 'Sticky Notes Viewer',
+                  focused: _interactive,
+                  onDragStart: () => _windowController?.startDrag(),
+                  onClose: _closeWindow,
+                  onOpenConfig: () => showConfigDialog(context),
+                  showWatchButton: _fileName != null,
+                  watchEnabled: _watchEnabled,
+                  onToggleWatch: _toggleWatch,
+                ),
               Expanded(
                 child: _markdown == null
                     ? const Center(
@@ -340,6 +343,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
               ),
             ),
           ),
+        ),
         ),
       ),
     );

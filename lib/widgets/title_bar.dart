@@ -7,6 +7,7 @@ class TitleBar extends StatelessWidget {
     required this.focused,
     required this.onDragStart,
     required this.onClose,
+    required this.onOpenConfig,
     this.showWatchButton = false,
     this.watchEnabled = false,
     this.onToggleWatch,
@@ -16,6 +17,7 @@ class TitleBar extends StatelessWidget {
   final bool focused;
   final VoidCallback onDragStart;
   final VoidCallback onClose;
+  final VoidCallback onOpenConfig;
   final bool showWatchButton;
   final bool watchEnabled;
   final VoidCallback? onToggleWatch;
@@ -73,6 +75,11 @@ class TitleBar extends StatelessWidget {
                         size: 18,
                       ),
                     ),
+                  IconButton(
+                    onPressed: onOpenConfig,
+                    tooltip: 'Конфигурация',
+                    icon: const Icon(Icons.settings, size: 18),
+                  ),
                   IconButton(
                     onPressed: onClose,
                     tooltip: 'Закрыть',
