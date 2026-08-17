@@ -346,13 +346,38 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  /// Opens a file picker and creates a NEW viewer window for the selected
+  /// file (instead of an empty orphan window).
   Future<void> _openNewWindow() async {
-    await WindowController.create(
-      const WindowConfiguration(
-        arguments: viewerArgument,
-        hiddenAtLaunch: true,
-      ),
+    final nativeHandle = await _windowController?.getNativeHandle();
+    final path = await pickMarkdownFile(
+      parentWindowHandle: nativeHandle,
+      dialogTitle: 'pick_file_dialog_title'.tr(),
     );
+    if (path == null) {
+      return;
+    }
+
+    try {
+      // Cascade the new window slightly from the current one.
+      final bounds = await _windowController?.getBounds();
+      final note = NoteEntry(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        filePath: path,
+        x: (bounds?.x ?? 100) + 28,
+        y: (bounds?.y ?? 100) + 28,
+        width: bounds?.width ?? 800,
+        height: bounds?.height ?? 600,
+      );
+      final store = await NotesStore.open();
+      await store.add(note);
+      await WindowController.create(
+        WindowConfiguration(
+          arguments: '$viewerArgument:${note.id}',
+          hiddenAtLaunch: true,
+        ),
+      );
+    } catch (_) {}
   }
 
   Future<void> _closeWindow() async {
