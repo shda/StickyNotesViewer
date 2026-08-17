@@ -441,11 +441,12 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
           child: Scaffold(
             body: Stack(
               children: [
-                // Markdown frame: starts 10px below the window top so the
-                // overlaying title bar never pushes it down when it expands.
+                // Markdown frame: starts 22px below the window top (10px
+                // collapsed title bar + visible 10px gap), so the overlaying
+                // title bar never pushes it down when it expands.
                 Positioned.fill(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.only(top: 20),
                     child: _markdown == null
                         ? Center(
                             child: Text(
@@ -459,7 +460,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                         : Markdown(
                             data: _normalizeMarkdownImages(_markdown!),
                             selectable: true,
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
                             styleSheet: markdownStyleSheet(
                               context,
                               scale: _fontScale,
