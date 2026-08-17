@@ -11,6 +11,11 @@ MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context,
       fontSize: 16 * scale,
       height: lineHeight,
     ),
+    listBullet: TextStyle(
+      color: Colors.white,
+      fontSize: 16 * scale,
+      height: lineHeight,
+    ),
     h1: TextStyle(
       color: Colors.white,
       fontSize: 28 * scale,
@@ -28,6 +33,41 @@ MarkdownStyleSheet darkMarkdownStyleSheet(BuildContext context,
       fontSize: 20 * scale,
       fontWeight: FontWeight.bold,
       height: lineHeight,
+    ),
+    h4: TextStyle(
+      color: Colors.white,
+      fontSize: 18 * scale,
+      fontWeight: FontWeight.bold,
+      height: lineHeight,
+    ),
+    h5: TextStyle(
+      color: Colors.white,
+      fontSize: 17 * scale,
+      fontWeight: FontWeight.bold,
+      height: lineHeight,
+    ),
+    h6: TextStyle(
+      color: Colors.white,
+      fontSize: 16 * scale,
+      fontWeight: FontWeight.bold,
+      height: lineHeight,
+    ),
+    a: TextStyle(
+      color: const Color(0xFF81D4FA),
+      decoration: TextDecoration.underline,
+    ),
+    blockquote: TextStyle(
+      color: Colors.white,
+      fontSize: 16 * scale,
+      height: lineHeight,
+    ),
+    blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    blockquoteDecoration: BoxDecoration(
+      color: const Color(0xFF2A2A2A),
+      borderRadius: BorderRadius.all(Radius.circular(4)),
+      border: const Border(
+        left: BorderSide(color: Colors.white70, width: 3),
+      ),
     ),
     code: const TextStyle(
       color: Color(0xFFE0E0E0),
