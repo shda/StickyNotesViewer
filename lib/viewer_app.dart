@@ -37,6 +37,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   bool _hovered = false;
   bool _watchEnabled = false;
   double _fontScale = 1.0;
+  double _lineHeight = 1.4;
   Color _titleColor = kDefaultTitleColor;
 
   bool get _interactive => _focused || _hovered;
@@ -110,6 +111,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
             _filePath = note.filePath;
             _watchEnabled = note.watchEnabled;
             _fontScale = note.fontScale;
+            _lineHeight = note.lineHeight;
             _titleColor = Color(note.titleColor);
           });
           if (_watchEnabled) {
@@ -189,6 +191,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
           height: bounds?.height ?? 600,
           watchEnabled: _watchEnabled,
           fontScale: _fontScale,
+          lineHeight: _lineHeight,
           titleColor: _titleColor.toARGB32(),
         );
         await store.add(note);
@@ -266,13 +269,16 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
       context,
       initialFontScale: _fontScale,
       initialTitleColor: _titleColor,
+      initialLineHeight: _lineHeight,
       onChanged: _onWindowSettingsChanged,
     );
   }
 
-  void _onWindowSettingsChanged(double fontScale, Color titleColor) {
+  void _onWindowSettingsChanged(
+      double fontScale, double lineHeight, Color titleColor) {
     setState(() {
       _fontScale = fontScale;
+      _lineHeight = lineHeight;
       _titleColor = titleColor;
     });
     _settingsDebounce?.cancel();
@@ -292,6 +298,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
         noteId,
         fontScale: _fontScale,
         titleColor: _titleColor.toARGB32(),
+        lineHeight: _lineHeight,
       );
     } catch (_) {}
   }
@@ -394,6 +401,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                         styleSheet: darkMarkdownStyleSheet(
                           context,
                           scale: _fontScale,
+                          lineHeight: _lineHeight,
                         ),
                         imageDirectory: _markdownImageDirectory,
                       ),
