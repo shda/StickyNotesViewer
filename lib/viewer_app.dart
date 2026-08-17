@@ -439,50 +439,61 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
           child: Scaffold(
-            body: Column(
+            body: Stack(
               children: [
-                TitleBar(
-                  title: _fileName ?? 'app_title'.tr(),
-                  focused: _interactive,
-                  color: _titleColor,
-                  onDragStart: () => _windowController?.startDrag(),
-                  onClose: _closeWindow,
-                  onOpenConfig: () => showConfigDialog(
-                    context,
-                    initialMdDark: _mdDark,
-                    onMdThemeChanged: _applyMdTheme,
-                  ),
-                  onOpenWindowSettings: () => _openWindowSettings(context),
-                  showWatchButton: _fileName != null,
-                  watchEnabled: _watchEnabled,
-                  onToggleWatch: _toggleWatch,
-                ),
-              Expanded(
-                child: _markdown == null
-                    ? Center(
-                        child: Text(
-                          'empty_note'.tr(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: _mdDark ? Colors.white70 : Colors.black54,
+                // Markdown frame: starts 10px below the window top so the
+                // overlaying title bar never pushes it down when it expands.
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: _markdown == null
+                        ? Center(
+                            child: Text(
+                              'empty_note'.tr(),
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: _mdDark ? Colors.white70 : Colors.black54,
+                              ),
+                            ),
+                          )
+                        : Markdown(
+                            data: _normalizeMarkdownImages(_markdown!),
+                            selectable: true,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            styleSheet: markdownStyleSheet(
+                              context,
+                              scale: _fontScale,
+                              lineHeight: _lineHeight,
+                              dark: _mdDark,
+                            ),
+                            imageDirectory: _markdownImageDirectory,
                           ),
-                        ),
-                      )
-                    : Markdown(
-                        data: _normalizeMarkdownImages(_markdown!),
-                        selectable: true,
-                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
-                        styleSheet: markdownStyleSheet(
-                          context,
-                          scale: _fontScale,
-                          lineHeight: _lineHeight,
-                          dark: _mdDark,
-                        ),
-                        imageDirectory: _markdownImageDirectory,
-                      ),
-              ),
-            ],
-          ),
+                  ),
+                ),
+                // Title bar overlays the md frame instead of shifting it.
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: TitleBar(
+                    title: _fileName ?? 'app_title'.tr(),
+                    focused: _interactive,
+                    color: _titleColor,
+                    onDragStart: () => _windowController?.startDrag(),
+                    onClose: _closeWindow,
+                    onOpenConfig: () => showConfigDialog(
+                      context,
+                      initialMdDark: _mdDark,
+                      onMdThemeChanged: _applyMdTheme,
+                    ),
+                    onOpenWindowSettings: () => _openWindowSettings(context),
+                    showWatchButton: _fileName != null,
+                    watchEnabled: _watchEnabled,
+                    onToggleWatch: _toggleWatch,
+                  ),
+                ),
+              ],
+            ),
           floatingActionButton: IgnorePointer(
             ignoring: !_interactive,
             child: AnimatedOpacity(
