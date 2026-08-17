@@ -12,6 +12,7 @@ Future<void> main(List<String> args) async {
 
   final settings = await AppSettings.open();
   final languageCode = await settings.loadLanguageCode();
+  final mdDark = (await settings.loadMarkdownTheme()) == 'dark';
 
   final isViewer = args.any(
     (a) => a == viewerArgument || a.startsWith('$viewerArgument:'),
@@ -23,7 +24,9 @@ Future<void> main(List<String> args) async {
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       startLocale: Locale(languageCode),
-      child: isViewer ? const ViewerApp() : const ManagerApp(),
+      child: isViewer
+          ? ViewerApp(initialMdDark: mdDark)
+          : const ManagerApp(),
     ),
   );
 }

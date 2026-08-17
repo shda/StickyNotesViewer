@@ -5,8 +5,10 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
+import 'app_settings.dart';
 import 'markdown_styles.dart';
 import 'notes_store.dart';
 import 'widgets/config_dialog.dart';
@@ -16,7 +18,11 @@ import 'window_constants.dart';
 import 'windows_file_dialog.dart';
 
 class ViewerApp extends StatefulWidget {
-  const ViewerApp({super.key});
+  const ViewerApp({super.key, this.initialMdDark = true});
+
+  /// Initial markdown colour scheme: `true` = dark bg with white elements,
+  /// `false` = light bg with black elements. Loaded from settings at startup.
+  final bool initialMdDark;
 
   @override
   State<ViewerApp> createState() => _ViewerAppState();
@@ -36,6 +42,7 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
   bool _focused = false;
   bool _hovered = false;
   bool _watchEnabled = false;
+  late bool _mdDark = widget.initialMdDark;
   double _fontScale = 1.0;
   double _lineHeight = 1.4;
   Color _titleColor = kDefaultTitleColor;
@@ -47,6 +54,39 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _showWindow());
+  }
+
+  /// Applies the markdown theme in this window, persists it and broadcasts it
+  /// to all other windows (each window is a separate process).
+  Future<void> _applyMdTheme(bool dark) async {
+    if (!mounted || dark == _mdDark) {
+      return;
+    }
+    setState(() => _mdDark = dark);
+    await AppSettings.open().then(
+        (s) => s.saveMarkdownTheme(dark ? 'dark' : 'light'));
+    try {
+      final windows = await WindowController.getAll();
+      for (final w in windows) {
+        try {
+          await w.invokeMethod('setMdTheme', {'dark': dark});
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  Future<dynamic> _onMdThemeMessage(MethodCall call) async {
+    if (call.method != 'setMdTheme') {
+      return null;
+    }
+    final args = call.arguments;
+    if (args is Map && args['dark'] is bool) {
+      final dark = args['dark'] as bool;
+      if (mounted && dark != _mdDark) {
+        setState(() => _mdDark = dark);
+      }
+    }
+    return null;
   }
 
   @override
@@ -79,6 +119,9 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
       try {
         final controller = await WindowController.fromCurrentEngine();
         _windowController = controller;
+        try {
+          await controller.setWindowMethodHandler(_onMdThemeMessage);
+        } catch (_) {}
         final store = await NotesStore.open();
         _store = store;
 
@@ -361,7 +404,9 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
       locale: context.locale,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
-        scaffoldBackgroundColor: const Color(0xFF333333),
+        scaffoldBackgroundColor: _mdDark
+            ? const Color(0xFF333333)
+            : const Color(0xFFF7F7F7),
         useMaterial3: true,
       ),
       home: Builder(
@@ -377,7 +422,11 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                   color: _titleColor,
                   onDragStart: () => _windowController?.startDrag(),
                   onClose: _closeWindow,
-                  onOpenConfig: () => showConfigDialog(context),
+                  onOpenConfig: () => showConfigDialog(
+                    context,
+                    initialMdDark: _mdDark,
+                    onMdThemeChanged: _applyMdTheme,
+                  ),
                   onOpenWindowSettings: () => _openWindowSettings(context),
                   showWatchButton: _fileName != null,
                   watchEnabled: _watchEnabled,
@@ -388,9 +437,9 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                     ? Center(
                         child: Text(
                           'empty_note'.tr(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
-                            color: Colors.white70,
+                            color: _mdDark ? Colors.white70 : Colors.black54,
                           ),
                         ),
                       )
@@ -398,10 +447,11 @@ class _ViewerAppState extends State<ViewerApp> with WidgetsBindingObserver {
                         data: _normalizeMarkdownImages(_markdown!),
                         selectable: true,
                         padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
-                        styleSheet: darkMarkdownStyleSheet(
+                        styleSheet: markdownStyleSheet(
                           context,
                           scale: _fontScale,
                           lineHeight: _lineHeight,
+                          dark: _mdDark,
                         ),
                         imageDirectory: _markdownImageDirectory,
                       ),

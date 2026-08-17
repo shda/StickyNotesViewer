@@ -4,15 +4,29 @@ import 'package:flutter/material.dart';
 import '../app_settings.dart';
 import '../autostart.dart';
 
-Future<void> showConfigDialog(BuildContext context) {
+Future<void> showConfigDialog(
+  BuildContext context, {
+  required bool initialMdDark,
+  required ValueChanged<bool> onMdThemeChanged,
+}) {
   return showDialog<void>(
     context: context,
-    builder: (context) => const ConfigDialog(),
+    builder: (context) => ConfigDialog(
+      initialMdDark: initialMdDark,
+      onMdThemeChanged: onMdThemeChanged,
+    ),
   );
 }
 
 class ConfigDialog extends StatefulWidget {
-  const ConfigDialog({super.key});
+  const ConfigDialog({
+    super.key,
+    required this.initialMdDark,
+    required this.onMdThemeChanged,
+  });
+
+  final bool initialMdDark;
+  final ValueChanged<bool> onMdThemeChanged;
 
   @override
   State<ConfigDialog> createState() => _ConfigDialogState();
@@ -20,11 +34,13 @@ class ConfigDialog extends StatefulWidget {
 
 class _ConfigDialogState extends State<ConfigDialog> {
   late bool _autostart;
+  late bool _mdDark;
 
   @override
   void initState() {
     super.initState();
     _autostart = Autostart.isEnabled();
+    _mdDark = widget.initialMdDark;
   }
 
   @override
@@ -34,7 +50,7 @@ class _ConfigDialogState extends State<ConfigDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: SizedBox(
         width: 420,
-        height: 300,
+        height: 360,
         child: Column(
           children: [
             Row(
@@ -66,6 +82,43 @@ class _ConfigDialogState extends State<ConfigDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        Text(
+                          'md_theme'.tr(),
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 14),
+                        ),
+                        const SizedBox(width: 16),
+                        DropdownButton<String>(
+                          dropdownColor: const Color(0xFF4A4A4A),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 14),
+                          value: _mdDark ? 'dark' : 'light',
+                          items: [
+                            DropdownMenuItem(
+                              value: 'dark',
+                              child: Text('theme_dark'.tr()),
+                            ),
+                            DropdownMenuItem(
+                              value: 'light',
+                              child: Text('theme_light'.tr()),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            final dark = value == 'dark';
+                            setState(() => _mdDark = dark);
+                            widget.onMdThemeChanged(dark);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white12, height: 1),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Text(
